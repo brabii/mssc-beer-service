@@ -1,0 +1,33 @@
+version: 2
+
+#orbs:
+ # maven: circleci/maven@0.0.12
+
+#workflows:
+ # maven_test:
+    jobs:
+        build:
+            docker:
+                - image: circleci/openjdk:11-browsers-legacy # utiliser image circleci/openjdk depuis docker
+            
+            working_directory: ~/repo
+            environment:
+                # max jvm heap limit
+                MAVEN_OPTS: -Xmx3200m
+            steps:
+                -checkout
+                
+                #télécharger et cache dependency
+                - restore_cache:
+                    keys:
+                        - v1-dependencies-{{ checksum "pom.xml" }}
+                        - v1-dependencies-
+                - run: mvn dependency:go-offline
+                
+                - save_cache:
+                    paths:
+                        - ~/.m2
+                    key: v1-dependencies-{{ checksum "pom.xml" }}
+
+                # run tests!
+                - run: mvn integration-test
